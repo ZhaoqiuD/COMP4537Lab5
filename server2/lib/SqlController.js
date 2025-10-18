@@ -1,5 +1,7 @@
 // ChatGPT-4o-mini assisted (https://chat.openai.com/)
 
+import { MSG } from './messages.js';
+
 export class SqlController {
   constructor(db, validator, samplePatients) {
     this.db = db;
@@ -9,10 +11,10 @@ export class SqlController {
 
   async getSqlResponse(sql) {
     if (!this.validator.isSelect(sql)) {
-      return { status: 400, body: { error: 'Only SELECT queries are allowed via GET.' } };
+      return { status: 400, body: { error: MSG.onlySelectOnGet } };
     }
     if (this.validator.containsForbidden(sql)) {
-      return { status: 403, body: { error: 'Forbidden: Only SELECT or INSERT allowed.' } };
+      return { status: 403, body: { error: MSG.forbidden } };
     }
     try {
       const rows = await this.db.query(sql);
@@ -23,12 +25,12 @@ export class SqlController {
   }
 
   async postSqlResponse(sql) {
-    if (!sql) return { status: 400, body: { error: 'SQL is missing in request body.' } };
+    if (!sql) return { status: 400, body: { error: MSG.sqlMissing } };
     if (!this.validator.isInsert(sql)) {
-      return { status: 400, body: { error: 'Only INSERT queries are allowed via POST.' } };
+      return { status: 400, body: { error: MSG.onlyInsertOnPost } };
     }
     if (this.validator.containsForbidden(sql)) {
-      return { status: 403, body: { error: 'Forbidden: Only SELECT or INSERT allowed.' } };
+      return { status: 403, body: { error: MSG.forbidden } };
     }
     try {
       const result = await this.db.query(sql);
@@ -64,4 +66,3 @@ export class SqlController {
     }
   }
 }
-

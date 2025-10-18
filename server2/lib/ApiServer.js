@@ -2,6 +2,7 @@
 
 import http from 'http';
 import { URL } from 'url';
+import { MSG } from './messages.js';
 
 export class ApiServer {
   constructor(config, controller) {
@@ -13,7 +14,7 @@ export class ApiServer {
   start() {
     this.server = http.createServer((req, res) => {
       this.#route(req, res).catch((err) => {
-        this.#sendJson(res, 500, { error: `Internal Server Error: ${err.message}` });
+        this.#sendJson(res, 500, { error: `${MSG.internalError}: ${err.message}` });
       });
     });
     this.server.listen(this.config.port, this.config.host, () => {
@@ -31,7 +32,7 @@ export class ApiServer {
       const parts = url.pathname.split('/').filter(Boolean);
       const idx = parts.findIndex((p) => p.toLowerCase() === 'sql');
       if (idx === -1 || idx === parts.length - 1) {
-        return this.#bad(res, 'SQL not provided in URL.');
+        return this.#bad(res, MSG.sqlNotProvidedInUrl);
       }
       const encodedQuery = parts.slice(idx + 1).join('/');
       const sql = decodeURIComponent(encodedQuery);
@@ -99,6 +100,6 @@ export class ApiServer {
 
   #ok(res, data) { this.#sendJson(res, 200, data); }
   #bad(res, message) { this.#sendJson(res, 400, { error: message }); }
-  #notFound(res) { this.#sendJson(res, 404, { error: 'Not Found' }); }
-  #methodNotAllowed(res) { this.#sendJson(res, 405, { error: 'Method Not Allowed' }); }
+  #notFound(res) { this.#sendJson(res, 404, { error: MSG.invalidRoute }); }
+  #methodNotAllowed(res) { this.#sendJson(res, 405, { error: MSG.invalidMethod }); }
 }

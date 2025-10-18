@@ -46,13 +46,8 @@
       <pre id="output">(no output yet)</pre>
     </div>
 
+    <script src="ui-strings.js"></script>
     <script>
-      // User strings at the top
-      const UI = {
-        enterApi: 'Please enter your API Base URL (origin 2).',
-        noSql: 'Please enter a SELECT or INSERT statement.',
-        onlySI: 'Only SELECT or INSERT statements are allowed in this lab.',
-      };
 
       const els = {
         apiBase: document.getElementById('apiBase'),
@@ -81,8 +76,8 @@
       }
 
       els.seedBtn.addEventListener('click', async () => {
-        const base = norm(els.apiBase.value);
-        if (!base) return alert(UI.enterApi);
+          const base = norm(els.apiBase.value);
+          if (!base) return alert(UI.enterApi);
         try {
           const { ok, data } = await postJSON(base.replace(/\/$/, '') + '/api/v1/seed', {});
           print(ok ? data : { error: true, ...data });
