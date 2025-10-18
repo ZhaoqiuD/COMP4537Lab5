@@ -1,0 +1,147 @@
+<!-- ChatGPT-4o-mini was used to help draft this page (https://chat.openai.com/) -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lab 5 Client</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
+      h1 { margin-bottom: 0.25rem; }
+      .box { border: 1px solid #ddd; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+      textarea { width: 100%; min-height: 120px; }
+      button { padding: 0.5rem 1rem; margin-right: 0.5rem; }
+      pre { background: #f7f7f7; padding: 1rem; border-radius: 8px; overflow: auto; }
+      label { display: block; font-weight: 600; margin: 0.25rem 0; }
+      input[type="text"] { width: 100%; padding: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Lab 5: Patient DB Client</h1>
+    <p>Two actions: insert sample rows, or run your SQL (SELECT or INSERT only).</p>
+
+    <div class="box">
+      <label for="apiBase">API Base URL (origin 2)</label>
+      <input id="apiBase" type="text" placeholder="https://api.example.com/lab5" />
+      <small>Example for GET: <code>/api/v1/sql/</code> + encodeURIComponent(<code>select * from patient</code>)</small>
+    </div>
+
+    <div class="box">
+      <h3>Seed Sample Patients</h3>
+      <button id="seedBtn">Insert Sample Rows (POST)</button>
+    </div>
+
+    <div class="box">
+      <h3>Run SQL</h3>
+      <p>Enter a SELECT or INSERT query. Client decides GET or POST.</p>
+      <textarea id="sqlBox" placeholder="SELECT * FROM patient"></textarea>
+      <div style="margin-top:0.5rem;">
+        <button id="runBtn">Run Query</button>
+        <button id="clearBtn">Clear Output</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>Server Response</h3>
+      <pre id="output">(no output yet)</pre>
+    </div>
+
+    <script>
+      // User strings at the top
+      const UI = {
+        enterApi: 'Please enter your API Base URL (origin 2).',
+        noSql: 'Please enter a SELECT or INSERT statement.',
+        onlySI: 'Only SELECT or INSERT statements are allowed in this lab.',
+      };
+
+      const els = {
+        apiBase: document.getElementById('apiBase'),
+        seedBtn: document.getElementById('seedBtn'),
+        sqlBox: document.getElementById('sqlBox'),
+        runBtn: document.getElementById('runBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        output: document.getElementById('output'),
+      };
+
+      const norm = (s) => String(s || '').trim();
+      const upper = (s) => norm(s).replace(/^;+|;+$/g,'').replace(/\s+/g,' ').toUpperCase();
+
+      function print(obj) {
+        els.output.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+      }
+
+      async function postJSON(url, payload) {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({ raw: 'Non-JSON response' }));
+        return { ok: res.ok, data };
+      }
+
+      els.seedBtn.addEventListener('click', async () => {
+        const base = norm(els.apiBase.value);
+        if (!base) return alert(UI.enterApi);
+        try {
+          const { ok, data } = await postJSON(base.replace(/\/$/, '') + '/api/v1/seed', {});
+          print(ok ? data : { error: true, ...data });
+        } catch (e) {
+          print({ error: String(e) });
+        }
+      });
+
+      els.runBtn.addEventListener('click', async () => {
+        const base = norm(els.apiBase.value);
+        if (!base) return alert(UI.enterApi);
+        const sql = els.sqlBox.value;
+        if (!norm(sql)) return alert(UI.noSql);
+
+        const kind = upper(sql);
+        if (kind.startsWith('SELECT')) {
+          // GET path encoding entire SQL
+          const url = base.replace(/\/$/, '') + '/api/v1/sql/' + encodeURIComponent(sql);
+          try {
+            const res = await fetch(url);
+            const data = await res.json().catch(() => ({ raw: 'Non-JSON response' }));
+            print(res.ok ? data : { error: true, ...data });
+          } catch (e) {
+            print({ error: String(e) });
+          }
+          return;
+        }
+
+        if (kind.startsWith('INSERT')) {
+          const url = base.replace(/\/$/, '') + '/api/v1/sql';
+          try {
+            const { ok, data } = await postJSON(url, { sql });
+            print(ok ? data : { error: true, ...data });
+          } catch (e) {
+            print({ error: String(e) });
+          }
+          return;
+        }
+
+        alert(UI.onlySI);
+      });
+
+      els.clearBtn.addEventListener('click', () => {
+        print('(cleared)');
+      });
+    </script>
+  </body>
+  </html>
+      // Prefill API base with localhost if empty
+      (function initDefaults(){
+        const saved = localStorage.getItem('lab5_api_base');
+        if (saved) {
+          els.apiBase.value = saved;
+        } else {
+          els.apiBase.value = 'http://localhost:8080';
+        }
+      })();
+
+      els.apiBase.addEventListener('change', () => {
+        const base = norm(els.apiBase.value);
+        if (base) localStorage.setItem('lab5_api_base', base);
+      });

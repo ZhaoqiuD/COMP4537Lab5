@@ -1,0 +1,14 @@
+{
+  "name": "lab5-server2",
+  "version": "1.0.0",
+  "description": "SQL API server without express (GET for SELECT, POST for INSERT).",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.9.2"
+  }
+}
+
