@@ -1,4 +1,4 @@
-<!-- ChatGPT-4o-mini was used to help draft this page (https://chat.openai.com/) -->
+<!-- ChatGPT-5 assisted (https://chat.openai.com/) -->
 <!doctype html>
 <html lang="en">
   <head>
@@ -46,8 +46,12 @@
       <pre id="output">(no output yet)</pre>
     </div>
 
-    <script src="ui-strings.js"></script>
     <script>
+      const UI = {
+        enterApi: 'Please enter your API Base URL (origin 2).',
+        noSql: 'Please enter a SELECT or INSERT statement.',
+        onlySI: 'Only SELECT or INSERT statements are allowed in this lab.',
+      };
 
       const els = {
         apiBase: document.getElementById('apiBase'),
@@ -59,7 +63,7 @@
       };
 
       const norm = (s) => String(s || '').trim();
-      const upper = (s) => norm(s).replace(/^;+|;+$/g,'').replace(/\s+/g,' ').toUpperCase();
+      const upper = (s) => norm(s).replace(/^;+|;+$/g, '').replace(/\s+/g, ' ').toUpperCase();
 
       function print(obj) {
         els.output.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
@@ -76,8 +80,8 @@
       }
 
       els.seedBtn.addEventListener('click', async () => {
-          const base = norm(els.apiBase.value);
-          if (!base) return alert(UI.enterApi);
+        const base = norm(els.apiBase.value);
+        if (!base) return alert(UI.enterApi);
         try {
           const { ok, data } = await postJSON(base.replace(/\/$/, '') + '/api/v1/seed', {});
           print(ok ? data : { error: true, ...data });
@@ -94,7 +98,6 @@
 
         const kind = upper(sql);
         if (kind.startsWith('SELECT')) {
-          // GET path encoding entire SQL
           const url = base.replace(/\/$/, '') + '/api/v1/sql/' + encodeURIComponent(sql);
           try {
             const res = await fetch(url);
@@ -123,16 +126,14 @@
       els.clearBtn.addEventListener('click', () => {
         print('(cleared)');
       });
-    </script>
-  </body>
-  </html>
-      // Prefill API base with localhost if empty
-      (function initDefaults(){
+
+      // Prefill API base with deployed backend by default
+      (function initDefaults() {
         const saved = localStorage.getItem('lab5_api_base');
         if (saved) {
           els.apiBase.value = saved;
         } else {
-          els.apiBase.value = 'http://localhost:8080';
+          els.apiBase.value = 'https://comp4537lab5-production-d50f.up.railway.app';
         }
       })();
 
@@ -140,3 +141,6 @@
         const base = norm(els.apiBase.value);
         if (base) localStorage.setItem('lab5_api_base', base);
       });
+    </script>
+  </body>
+</html>
